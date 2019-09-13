@@ -1,109 +1,146 @@
 import { readFileSync } from 'fs';
-const textByLine = readFileSync('data/large1.txt').toString().split("\n");
 
+function getBestItems(file, limit) {
+    const textByLine = readFileSync(file).toString().split("\n");
 
-const weightLimit = 100;
+    const weightLimit = limit;
 
-const removeR = textByLine.map( item => item.replace(/\r/g, ""))
-const arrayByRow = removeR.filter( item => item !== "");
-const arrayOfArrays = arrayByRow.map( item => item.split(' ').map( string => Number(string)));
+    let items = textByLine.map( item => item.replace(/\r/g, ""))
+    items = items.filter( item => item !== "");
+    items = items.map( item => item.split(' ').map( string => Number(string)));
 
-//Add in Profit/Weight - where Profit is the 3rd value in each array and Weight is the 2nd value in each array
+    //Add an index to each array to show strength (3rd item/2nd item)
+    //Also we are going to set each array to be an object, so we can use keys to better understand things below
+    items = items.map( arr => {
+        let newObj = {};
+        newObj.index = arr[0];
+        newObj.weight = arr[1];
+        newObj.value = arr[2];
+        newObj.strength = newObj.value/newObj.weight;
+        return newObj;
+    })
 
-const addedValues = arrayOfArrays.map( arr => {
-    arr.push(arr[2]/arr[1]);
-    return arr;
-})
+    console.log(items);
 
-///Sort array of arrays by the last item in each array
-const sortedArray = addedValues.sort((x, y) => {
-    //Sort largest to smallest profitWeightRate
-    if (x[3] > y[3]) {
-        return -1;
-    } else if (x[3] == y[3]) {
-        //If they have the same profit rate, then make the one that is less weight be higher in the array
-        if (x[2] < y[2]){
+    ///Sort array of arrays in descending order of strength
+    const sortedStore = items.sort((x, y) => {
+        //Sort largest to smallest
+        if (x.strength > y.strength) {
             return -1;
+        } else if (x.strength == y.strength) {
+            //If they have the same strength index 3
+            //Then we want the item with a smaller weight 2
+            if (x.weight < y.weight){
+                return -1;
+            } else {
+                return 1;
+            }
         } else {
             return 1;
+        };
+    })
+
+
+
+    //We make a new array to add items to it (ADDING ITEMS TO OUR BAG)
+    let bag = [];
+    let totalWeight = 0;
+    let totalValue = 0;
+
+    for (let i = 0; i < sortedStore.length; i++) {
+        //Add item to our BAG if it's under the weightLimit
+        const currentNotBagItem = sortedStore[i];
+        if (totalWeight + currentNotBagItem.weight <= weightLimit) {
+            bag.push(currentNotBagItem);
+            totalWeight += currentNotBagItem.weight;
+            totalValue += currentNotBagItem.value;
         }
-    } else {
-        return 1;
-    };
-})
-
-
-
-//Now we are going to make a new array, so that we can add items to it, add to the total weight, and add to the total value
-const itemsSelected = [];
-let totalWeight = 0;
-let totalValue = 0;
-
-for (let i = 0; i < sortedArray.length; i++) {
-    sortedArray[i][0] === 987 ? console.log(`HERE ${sortedArray[i]}`) : null;
-    if (totalWeight + sortedArray[i][1] <= weightLimit) {
-        console.log(`Total weight currently is ${totalWeight}`)
-        //Added the item number to the array as long as the weight of the item plus the total weight is less than or equal to 100
-        console.log(`Current item is ${sortedArray[i]}`)
-        itemsSelected.push(sortedArray[i][0])
-        totalWeight += sortedArray[i][1]
-        totalValue += sortedArray[i][2]
     }
+
+    let notBag = sortedStore.filter( item => !bag.includes(item));
+    console.log(notBag);
+
+    //Average of the two weakest items in the bag
+    let weakestAverage = (bag[bag.length-1].strength + bag[bag.length-2].strength)/(2);
+    console.log(weakestAverage);
+
+    let itemsToAdd = [];
+    let itemsToReplace = [];
+
+    for (let i = 0; i < notBag.length; i++){
+        const currentNotBagItem = notBag[i];
+
+        //One item that is notBag will never replace one item in bag, so we do weakest average to find the lowest average we're trying to replace with 1 item
+        if (currentNotBagItem.strength > weakestAverage) {
+            //We don't want items that have the same weight as currentNotBagItem
+            //We want to look through these potentialReplacements in ascending order        
+            const potentialReplacements = bag.filter( arr => arr.weight < currentNotBagItem.weight).reverse();
+
+            //We are going to loop through potential replacements and keep track of weight and the items
+            let weightCount = 0;
+            let choiceItems = [];
+            for (let j = 0; j < potentialReplacements.length; j++){
+                
+                weightCount += potentialReplacements[j].weight;
+                if (weightCount > currentNotBagItem.weight){
+                    continue;
+                } else {
+                    choiceItems.push(potentialReplacements[j]);
+
+                    //Check if average of choiceItems is < than my currentNotBagItemStrength
+                    let choicesAverage = choiceItems.reduce( (acc, cur) => acc.strength + cur.strength,{strength: 0})/(choiceItems.length);
+                    if (choicesAverage < currentNotBagItem.strength){
+                        //Now we replace our currentNotBagItem
+                        itemsToAdd.push(currentNotBagItem);
+                        itemsToReplace.push(choiceItems);
+
+                        //Also set new weakest strength to current weakest strength of my item
+
+                        //Find index of item before last item in choiceItems to obtain new second weakest item in array way above
+                        let secondWeakestIndex = bag.indexOf(choiceItems[choiceItems.length-1])-1;
+                        weakestAverage = (currentNotBagItem.strength + bag[secondWeakestIndex])/2;
+                    }
+                }
+            }
+        }
+    }
+
+    console.log(itemsToAdd)
+    console.log(itemsToReplace)
+
+    //Now we have to return the bag with the correct items
+    for (let i = 0; i < itemsToReplace.length; i++){
+        //Remove items
+        console.log(bag.length);
+        itemsToReplace[i].forEach( item => {
+            bag.splice(bag.indexOf(item), 1);
+        })
+        console.log(bag.length)
+        //Add items
+        itemsToAdd.forEach((item) => bag.push(item))
+    }
+    console.log(bag);
+    let finalWeight = 0;
+    let finalValue = 0;
+    let finalAnswers = [];
+    for (let i = 0; i < bag.length; i++){
+        console.log(bag[i])
+        finalWeight += bag[i].weight;
+        finalValue += bag[i].value;
+        finalAnswers.push(bag[i].index);
+    }
+    console.log(finalWeight);
+    console.log(finalValue);
+    console.log(finalAnswers);
+
+    return finalAnswers.sort();
 }
 
+console.log(getBestItems("./data/large1.txt", 100));
+console.log(getBestItems("./data/small1.txt", 100));
+console.log(getBestItems("./data/small2.txt", 100));
+console.log(getBestItems("./data/small3.txt", 100));
+console.log(getBestItems("./data/medium1.txt", 100));
+console.log(getBestItems("./data/medium2.txt", 100));
+console.log(getBestItems("./data/medium3.txt", 100));
 
-// Maybe I loop through my list and check to see if any two items are less than 1 single item on original
-// this would take care of rare cases where an item of 2 is worth more than two items etc
-for (let i = 0:)
-
-
-console.log(totalWeight);
-console.log(totalValue);
-
-
-
-
-///Testing to make sure final answer is actually correct
-let w = 0;
-for (let i = 0; i < answerArray.length; i++){
-    //each item is index 1 higher
-    console.log(answerArray[i]-1)
-    w += arrayOfArrays[answerArray[i]-1][1];
-}
-
-// //Finidng the different value
-// answerArray.forEach( item => !itemsSelected.includes(item) ? console.log(item) : null );
-// itemsSelected.forEach( item => !answerArray.includes(item) ? console.log(item) : null);
-
-
-///I have 329 and 700 - answer has 987
-
-
-
-
-
-
-
-
-
-
-
-
-// 987 2 27 = 13.5
-// 329 1 15 = 15
-// 700 1 11 = 11
-
-
-// 1 3000 30 = 100
-// 2 2000 20 = 100
-// 3 1500 15 = 100
-
-/* 
-
-Maybe I loop through my list and check to see if any two items are less than 1 single item on original
-
-this would take care of rare cases where an item of 2 is worth more than two items etc
-
-
-
-*/
