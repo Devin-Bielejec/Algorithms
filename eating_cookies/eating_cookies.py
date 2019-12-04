@@ -1,46 +1,52 @@
 #!/usr/bin/python
 
 import sys
-
+import functools
+import math
 # The cache parameter is here for if you want to implement
 # a solution that is more efficient than the naive
 # recursive solution
 
 
-def eating_cookies(amount, cache=None):
+def eating_cookies(amount, denomination=[3, 2, 1], cache=None):
     if amount == 0:
         return 1
-    ways = 0
+    totalPermus = 0
     currentSolution = ["", "", ""]
 
     def makeCookiesRecursive(amount, denominations):
-        nonlocal ways
+        nonlocal totalPermus
         nonlocal currentSolution
         # Base Case
         currentDenom = denominations[0]
         if len(denominations) == 1:
             if amount % currentDenom == 0:
-                currentSolution[3 - len(denominations)] = amount//currentDenom
-                print("current solution", currentSolution)
+                currentSolution[len(currentSolution) -
+                                len(denominations)] = amount//currentDenom
 
                 # Permutation logic
-                ways = ways + 1
+                sum = functools.reduce(lambda a, b: a+b, currentSolution)
+                currentPermus = math.factorial(sum)
 
+                for num in currentSolution:
+                    currentPermus = currentPermus // math.factorial(num)
+                totalPermus += currentPermus
         # Recursive Case
         else:
             for item in range(amount//currentDenom+1):
                 newAmount = amount - item*currentDenom
                 # removing the first denomination
                 newDenominations = denominations[1:]
-                currentSolution[3 - len(denominations)] = item
+                currentSolution[len(currentSolution) -
+                                len(denominations)] = item
                 makeCookiesRecursive(newAmount, newDenominations)
 
     makeCookiesRecursive(amount, denominations=[3, 2, 1])
 
-    if ways == 0:
+    if totalPermus == 0:
         return 1
     else:
-        return ways
+        return totalPermus
 
 
 if __name__ == "__main__":
