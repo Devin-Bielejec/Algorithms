@@ -8,40 +8,51 @@ import math
 # recursive solution
 
 
-def eating_cookies(amount, denomination=[3, 2, 1], cache=None):
+def eating_cookies(amount, denominations=[3, 2, 1], cache=None):
+
     if amount == 0:
         return 1
-    totalPermus = 0
-    currentSolution = ["", "", ""]
 
-    def makeCookiesRecursive(amount, denominations):
+    totalPermus = 0
+
+    # Creating an empty list equal to the size of denominations
+    currentSolution = ["" for x in range(len(denominations))]
+
+    def helper(amount, denominations):
         nonlocal totalPermus
         nonlocal currentSolution
-        # Base Case
         currentDenom = denominations[0]
+
+        # Base Case
         if len(denominations) == 1:
+            # Check solution is viable, ie no more remainders
             if amount % currentDenom == 0:
+                # replace currentSolution at denomination index with correct amount
                 currentSolution[len(currentSolution) -
                                 len(denominations)] = amount//currentDenom
-
+                print(currentSolution)
                 # Permutation logic
-                sum = functools.reduce(lambda a, b: a+b, currentSolution)
-                currentPermus = math.factorial(sum)
-
+                solSum = functools.reduce(lambda a,b: (a if a != "" else 0)+(b if b != "" else 0), currentSolution)
+                currentPermus = math.factorial(solSum)
+                
                 for num in currentSolution:
                     currentPermus = currentPermus // math.factorial(num)
+
                 totalPermus += currentPermus
         # Recursive Case
         else:
             for item in range(amount//currentDenom+1):
                 newAmount = amount - item*currentDenom
+
                 # removing the first denomination
                 newDenominations = denominations[1:]
+
+                # replace currentSolution at denomination index with correct amount
                 currentSolution[len(currentSolution) -
                                 len(denominations)] = item
-                makeCookiesRecursive(newAmount, newDenominations)
+                helper(newAmount, newDenominations)
 
-    makeCookiesRecursive(amount, denominations=[3, 2, 1])
+    helper(amount, denominations=[3, 2, 1])
 
     if totalPermus == 0:
         return 1
