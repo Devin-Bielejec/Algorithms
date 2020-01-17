@@ -3,29 +3,37 @@
 import sys
 import copy
 
-
+#recursive
 def rock_paper_scissors(n):
+    # Recursive Base Solution
     if n == 0:
         return [[]]
-    # rock paper scissors
-    sol = []
-    # Recursive Base Solution
-    if n == 1:
-        sol.append(["rock"])
-        sol.append(["paper"])
-        sol.append(["scissors"])
-        return sol
     # Recursive else solution
-    else:
-        prev = rock_paper_scissors(n-1)
-        for play in prev:
-            for move in ["rock", "paper", "scissors"]:
-                copyPlay = copy.copy(play)
-                copyPlay.append(move)
-                sol.append(copyPlay)
+    sol = []
+    prev = rock_paper_scissors(n-1)
+    for play in prev:
+        sol.append([*play, "rock"])
+        sol.append([*play, "paper"])
+        sol.append([*play, "scissors"])
 
     return sol
 
+#iterative
+def rock_paper_scissors(n):
+    queue = []
+    queue.append([])
+    while len(queue) > 0:
+        current = queue.pop(0)
+
+        if len(current) == n:
+            queue.insert(0, current)
+            break
+
+        queue.append([*current, "rock"])
+        queue.append([*current, "paper"])
+        queue.append([*current, "scissors"])
+    
+    return queue
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
