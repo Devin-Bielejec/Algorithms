@@ -7,57 +7,52 @@ import math
 # a solution that is more efficient than the naive
 # recursive solution
 
+#He can eat 0, 1, 2, 3 cookies at a time
 
-def eating_cookies(amount, denominations=[3, 2, 1], cache=None):
+#Recursive
+# cache = {"0":1, "1": 1, "2": 2}
+# def eating_cookies(amount, cache=cache):
+#     if f"{amount}" in cache:
+#         return cache[f"{amount}"]
+    
+#     total = 0
+#     for val in range(amount - 1, amount - 4, -1):
+#         cache_value = eating_cookies(val, cache=cache)
+#         total += cache_value
+#         cache[f"{val}"] = cache_value
 
+#     return total
+
+#old iterative
+# def eating_cookies(amount, cache=None):
+#     queue = [amount]
+#     total = 0
+#     while queue:
+#         current = queue.pop(0)
+
+#         if current == 0:
+#             total += 1
+#         if current - 3 >= 0:
+#             queue.append(current-3)
+#         if current - 2 >= 0:
+#             queue.append(current-2)
+#         if current - 1 >= 0:
+#             queue.append(current-1)
+#     return total
+
+def eating_cookies(amount, cache=None):
+    seq = {"0": 1, "1": 1, "2": 2}
     if amount == 0:
-        return 1
-
-    totalPermus = 0
-
-    # Creating an empty list equal to the size of denominations
-    currentSolution = ["" for x in range(len(denominations))]
-
-    def helper(amount, denominations):
-        nonlocal totalPermus
-        nonlocal currentSolution
-        currentDenom = denominations[0]
-
-        # Base Case
-        if len(denominations) == 1:
-            # Check solution is viable, ie no more remainders
-            if amount % currentDenom == 0:
-                # replace currentSolution at denomination index with correct amount
-                currentSolution[len(currentSolution) -
-                                len(denominations)] = amount//currentDenom
-                print(currentSolution)
-                # Permutation logic
-                solSum = functools.reduce(lambda a,b: (a if a != "" else 0)+(b if b != "" else 0), currentSolution)
-                currentPermus = math.factorial(solSum)
-                
-                for num in currentSolution:
-                    currentPermus = currentPermus // math.factorial(num)
-
-                totalPermus += currentPermus
-        # Recursive Case
-        else:
-            for item in range(amount//currentDenom+1):
-                newAmount = amount - item*currentDenom
-
-                # removing the first denomination
-                newDenominations = denominations[1:]
-
-                # replace currentSolution at denomination index with correct amount
-                currentSolution[len(currentSolution) -
-                                len(denominations)] = item
-                helper(newAmount, newDenominations)
-
-    helper(amount, denominations=[3, 2, 1])
-
-    if totalPermus == 0:
-        return 1
+        return seq["0"]
+    elif amount == 1:
+        return seq["1"]
+    elif amount == 2:
+        return seq["2"]
     else:
-        return totalPermus
+        for i in range(3, amount +1):
+            seq[str(i)] = seq[str(i-1)] + seq[str(i-2)] + seq[str(i-3)]  
+    
+    return seq[str(amount)]
 
 
 if __name__ == "__main__":
@@ -69,35 +64,3 @@ if __name__ == "__main__":
         print('Usage: eating_cookies.py [num_cookies]')
 
 
-"""
-[3, 2, 1]
-
-3
-
-0 0 3
-0 1 1
-1 0 0
-
-[1, 2, 3]
-
-0 0 1  -1
-1 1 0  -2
-3 0 0
-
-5
-
-[3, 2, 1]
-
-0 0 5   - 1
-0 1 3   - 4   4!/3!
-0 2 1   - 3
-1 0 2   - 3
-1 1 0   - 2
-
-0 2 2 - 4!/2!2!
-
-
-
-
-
-"""
