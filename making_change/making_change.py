@@ -1,38 +1,33 @@
 #!/usr/bin/python
 
 import sys
+import random
+
+#Recursive
+# def making_change(amount, denominations, cache=None):
+#     if amount == 0:
+#         return 1
+#     if amount < 0:
+#         return 0
+#     if len(denominations) <= 0:
+#         return 0
+
+#     return making_change(amount, denominations[:-1]) + making_change(amount - denominations[-1], denominations)
 
 
-def making_change(amount, denominations):
-    if amount == 0:
-        return 1
-    ways = 0
+#Iterative
+def making_change(amount, denominations, cache=None):
+    combinations = [0] * (amount+1)
 
-    def makeChangeRecursive(amount, denominations):
-        denominations.sort()
-        nonlocal ways
-        # Base Case
-        currentDenom = denominations[0]
-        if len(denominations) == 1:
-            if amount % currentDenom == 0:
-                ways = ways + 1
-            else:
-                ways = ways + 0
-        # Recursive Case
-        else:
-            for item in range(amount//currentDenom+1):
-                newAmount = amount - item*currentDenom
-                # removing the first denomination
-                newDenominations = denominations[1:]
+    combinations[0] = 1
 
-                makeChangeRecursive(newAmount, newDenominations)
+    for denom in denominations:
+        for i in range(1, amount+1):
+            if i >= denom:
+                combinations[i] += combinations[i - denom]
 
-    makeChangeRecursive(amount, denominations)
 
-    if ways == 0:
-        return 1
-    else:
-        return ways
+    return combinations[amount]
 
 
 if __name__ == "__main__":
@@ -41,7 +36,7 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         denominations = [1, 5, 10, 25, 50]
         amount = int(sys.argv[1])
-        print("There are {ways} ways to make {amount} cents.".format(
-            ways=making_change(amount, denominations), amount=amount))
+        print("There are {combos} combos to make {amount} cents.".format(
+            combos=making_change(amount, denominations), amount=amount))
     else:
         print("Usage: making_change.py [amount]")
